@@ -35,6 +35,8 @@ namespace lox
         {
             if (expr.Value == null)
                 return "nil";
+            if (expr.Value is string)
+                return $"\"{expr.Value}\"";
             return expr.Value.ToString();
         }
 

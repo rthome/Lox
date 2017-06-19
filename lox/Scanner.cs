@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using static lox.TokenType;
 
 namespace lox
@@ -52,6 +53,8 @@ namespace lox
                 return source[current + 1];
             }
         }
+
+        char Advance() => source[current++];
         
         bool IsDigit(char c) => c >= '0' && c <= '9';
 
@@ -62,13 +65,7 @@ namespace lox
                 || c == '_';
         }
 
-        bool IsAlphaNumeric(char c) => IsDigit(c) || IsAlpha(c);
-
-        char Advance()
-        {
-            current++;
-            return source[current - 1];
-        }
+        bool IsAlphaNum(char c) => IsDigit(c) || IsAlpha(c);
 
         bool Match(char expected)
         {
@@ -81,16 +78,14 @@ namespace lox
             return true;
         }
 
+        string TokenText(int startTrim = 0, int endTrim = 0) => source.Substring(start + startTrim, (current - start) + endTrim - startTrim);
+
         void AddToken(TokenType type) => AddToken(type, null);
 
         void AddToken(TokenType type, object literal)
         {
-            var text = LexemeValue();
-            tokens.Add(new Token(type, text, literal, line));
+            tokens.Add(new Token(type, TokenText(), literal, line));
         }
-
-        string LexemeValue(int leftIndent = 0, int rightIndent = 0)
-            => source.Substring(start + leftIndent, (start + leftIndent) + (current - rightIndent));
 
         #endregion
 
@@ -114,7 +109,7 @@ namespace lox
             // For the closing "
             Advance();
 
-            var value = LexemeValue(1, -1);
+            var value = TokenText(1, -1);
             AddToken(TokenType.String, value);
         }
 
@@ -130,17 +125,16 @@ namespace lox
                     Advance();
             }
 
-            var value = LexemeValue();
-            AddToken(TokenType.Number, double.Parse(value));
+            var value = TokenText();
+            AddToken(TokenType.Number, double.Parse(value, CultureInfo.InvariantCulture));
         }
 
         void Identifier()
         {
-            while (IsAlphaNumeric(Peek))
+            while (IsAlphaNum(Peek))
                 Advance();
             
-            var text = LexemeValue();
-            if (keywords.TryGetValue(text, out var type))
+            if (keywords.TryGetValue(TokenText(), out var type))
                 AddToken(type);
             else
                 AddToken(TokenType.Identifier);
@@ -167,6 +161,8 @@ namespace lox
                 case '<': AddToken(Match('=') ? LessEqual : Less); break;
                 case '>': AddToken(Match('=') ? GreaterEqual : Greater); break;
 
+                case '"': String(); break;
+
                 // TODO: Support C-style /* ... */ comments
                 case '/':
                     if (Match('/'))
@@ -177,8 +173,6 @@ namespace lox
                     else
                         AddToken(Slash);
                     break;
-                
-                case '"': String(); break;
                 
                 case ' ':
                 case '\r':
@@ -196,7 +190,7 @@ namespace lox
                     else if (IsAlpha(c))
                         Identifier();
                     else
-                        Program.Error(line, "Unexpected character.");
+                        Program.Error(line, $"Unexpected character '{c}'.");
                     break;
             }
         }
