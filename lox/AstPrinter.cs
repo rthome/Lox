@@ -21,22 +21,22 @@ namespace lox
 
         public string Print(Expr expr) => expr.Accept(this);
 
-        public string VisitTernaryExpr(Expr.Ternary expr)
+        string Expr.IVisitor<string>.VisitTernaryExpr(Expr.Ternary expr)
         {
             return Parenthesize("?:", expr.Cond, expr.Left, expr.Right);
         }
 
-        public string VisitBinaryExpr(Expr.Binary expr)
+        string Expr.IVisitor<string>.VisitBinaryExpr(Expr.Binary expr)
         {
             return Parenthesize(expr.Op.Lexeme, expr.Left, expr.Right);
         }
 
-        public string VisitGroupingExpr(Expr.Grouping expr)
+        string Expr.IVisitor<string>.VisitGroupingExpr(Expr.Grouping expr)
         {
             return Parenthesize("group", expr.Expression);
         }
 
-        public string VisitLiteralExpr(Expr.Literal expr)
+        string Expr.IVisitor<string>.VisitLiteralExpr(Expr.Literal expr)
         {
             if (expr.Value == null)
                 return "nil";
@@ -45,7 +45,7 @@ namespace lox
             return expr.Value.ToString();
         }
 
-        public string VisitUnaryExpr(Expr.Unary expr)
+        string Expr.IVisitor<string>.VisitUnaryExpr(Expr.Unary expr)
         {
             return Parenthesize(expr.Op.Lexeme, expr.Right);
         }

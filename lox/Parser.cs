@@ -24,6 +24,12 @@ namespace lox
             return Previous;
         }
 
+        void Regurgitate()
+        {
+            if (current > 0)
+                current--;
+        }
+
         bool Check(TokenType type)
         {
             if (IsAtEnd)
@@ -82,9 +88,29 @@ namespace lox
             throw Error(Peek, message);
         }
 
+        Expr ConsumeBinaryNoLeft(Func<Expr> nextRule, params TokenType[] matchedTypes)
+        {
+            if (Match(matchedTypes))
+            {
+                // Hack for unary minus
+                if (Previous.Type == Minus)
+                {
+                    Regurgitate();
+                    return Unary();
+                }
+
+                var op = Previous;
+                var right = nextRule();
+
+                throw Error(op, "Binary operator appeared at start of expression (without left operand.)");
+            }
+            else
+                return nextRule();
+        }
+
         Expr ConsumeBinary(Func<Expr> nextRule, params TokenType[] matchedTypes)
         {
-            var expr = nextRule();
+            var expr = ConsumeBinaryNoLeft(nextRule, matchedTypes);
             while (Match(matchedTypes))
             {
                 var op = Previous;
