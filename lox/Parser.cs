@@ -140,7 +140,9 @@ namespace lox
 
         Expr Equality() => ConsumeBinary(Comparison, BangEqual, EqualEqual);
 
-        Expr Expression() => Equality();
+        Expr Comma() => ConsumeBinary(Equality, TokenType.Comma);
+
+        Expr Expression() => Comma();
 
         #endregion
 
