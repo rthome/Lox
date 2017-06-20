@@ -14,6 +14,8 @@ namespace lox
         Semicolon,
         Slash,
         Star,
+        Colon,
+        QuestionMark,
 
         // One or two character tokens
         Bang,

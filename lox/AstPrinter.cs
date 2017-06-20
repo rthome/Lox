@@ -21,6 +21,11 @@ namespace lox
 
         public string Print(Expr expr) => expr.Accept(this);
 
+        public string VisitTernaryExpr(Expr.Ternary expr)
+        {
+            return Parenthesize("?:", expr.Cond, expr.Left, expr.Right);
+        }
+
         public string VisitBinaryExpr(Expr.Binary expr)
         {
             return Parenthesize(expr.Op.Lexeme, expr.Left, expr.Right);

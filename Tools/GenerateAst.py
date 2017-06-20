@@ -91,6 +91,7 @@ def  main():
         sys.exit(1)
     output_dir = sys.argv[1]
     define_ast(output_dir, "Expr", [
+        "Ternary  : Expr cond, Expr left, Expr right",
         "Binary   : Expr left, Token op, Expr right",
         "Grouping : Expr expression",
         "Literal  : object value",

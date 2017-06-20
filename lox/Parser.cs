@@ -140,7 +140,20 @@ namespace lox
 
         Expr Equality() => ConsumeBinary(Comparison, BangEqual, EqualEqual);
 
-        Expr Comma() => ConsumeBinary(Equality, TokenType.Comma);
+        Expr Ternary()
+        {
+            var cond = Equality();
+            if (Match(TokenType.QuestionMark))
+            {
+                var left = Equality();
+                Consume(Colon, "Expected ':' in ternary operator expression.");
+                var right = Equality();
+                return new Expr.Ternary(cond, left, right);
+            }
+            return cond;
+        }
+
+        Expr Comma() => ConsumeBinary(Ternary, TokenType.Comma);
 
         Expr Expression() => Comma();
 

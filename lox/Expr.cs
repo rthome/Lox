@@ -6,10 +6,29 @@ namespace lox
 		
 		public interface IVisitor<T>
 		{
+			T VisitTernaryExpr(Ternary expr);
 			T VisitBinaryExpr(Binary expr);
 			T VisitGroupingExpr(Grouping expr);
 			T VisitLiteralExpr(Literal expr);
 			T VisitUnaryExpr(Unary expr);
+		}
+		
+		public class Ternary : Expr
+		{
+			public Expr Cond { get; set; }
+			
+			public Expr Left { get; set; }
+			
+			public Expr Right { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitTernaryExpr(this);
+			
+			public Ternary(Expr cond, Expr left, Expr right)
+			{
+				Cond = cond;
+				Left = left;
+				Right = right;
+			}
 		}
 		
 		public class Binary : Expr
