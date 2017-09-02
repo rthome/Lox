@@ -7,6 +7,9 @@ namespace lox
     class Program
     {
         static bool hadError;
+        static bool hadRuntimeError;
+
+        static readonly Interpreter interpreter = new Interpreter();
 
         #region Error Reporting
 
@@ -21,6 +24,12 @@ namespace lox
         public static void Error(int line, string message)
         {
             Report(line, string.Empty, message);
+        }
+
+        public static void RuntimeError(RuntimeException error)
+        {
+            Console.WriteLine($"{error.Message} [line {error.Token.Line}]");
+            hadRuntimeError = true;
         }
 
         static void Report(int line, string where, string message)
@@ -41,7 +50,7 @@ namespace lox
             if (hadError)
                 return;
 
-            Console.WriteLine(new AstPrinter().Print(expression));
+            interpreter.Interpret(expression);
         }
 
         static void RunFile(string path)
@@ -50,6 +59,8 @@ namespace lox
             Run(sourceString);
             if (hadError)
                 Environment.Exit(65);
+            if (hadRuntimeError)
+                Environment.Exit(70);
         }
 
         static void RunPrompt()
