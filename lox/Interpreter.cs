@@ -6,7 +6,7 @@ namespace lox
 {
     class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object>
     {
-        readonly Environment environment = new Environment();
+        Environment environment = new Environment();
 
         bool IsTruthy(object value)
         {
@@ -51,6 +51,21 @@ namespace lox
         object Evaluate(Expr expr) => expr.Accept(this);
 
         void Execute(Stmt statement) => statement.Accept(this);
+
+        void ExecuteBlock(IEnumerable<Stmt> statements, Environment environment)
+        {
+            var previous = this.environment;
+            try
+            {
+                this.environment = environment;
+                foreach (var stmt in statements)
+                    Execute(stmt);
+            }
+            finally
+            {
+                this.environment = previous;
+            }
+        }
 
         object Expr.IVisitor<object>.VisitLiteralExpr(Expr.Literal expr) => expr.Value;
 
@@ -131,6 +146,13 @@ namespace lox
                 return Evaluate(expr.Right);
         }
 
+        object Expr.IVisitor<object>.VisitAssignExpr(Expr.Assign expr)
+        {
+            var value = Evaluate(expr.Value);
+            environment.Assign(expr.Name, value);
+            return value;
+        }
+
         object Stmt.IVisitor<object>.VisitExpressionStmt(Stmt.Expression stmt)
         {
             Evaluate(stmt.Expr);
@@ -154,11 +176,10 @@ namespace lox
             return null;
         }
 
-        object Expr.IVisitor<object>.VisitAssignExpr(Expr.Assign expr)
+        object Stmt.IVisitor<object>.VisitBlockStmt(Stmt.Block stmt)
         {
-            var value = Evaluate(expr.Value);
-            environment.Assign(expr.Name, value);
-            return value;
+            ExecuteBlock(stmt.Statements, new Environment(environment));
+            return null;
         }
 
         public void Interpret(IEnumerable<Stmt> statements)
@@ -167,6 +188,31 @@ namespace lox
             {
                 foreach (var stmt in statements)
                     Execute(stmt);
+            }
+            catch (RuntimeException exc)
+            {
+                Program.RuntimeError(exc);
+            }
+        }
+
+        public object Interpret(Expr expression)
+        {
+            try
+            {
+                return Evaluate(expression);
+            }
+            catch (RuntimeException exc)
+            {
+                Program.RuntimeError(exc);
+                return null;
+            }
+        }
+
+        public void Interpret(Stmt statement)
+        {
+            try
+            {
+                Execute(statement);
             }
             catch (RuntimeException exc)
             {

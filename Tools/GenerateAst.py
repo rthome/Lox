@@ -65,6 +65,9 @@ def define_visitor(writer, base_name, type_definitions):
 def define_ast(output_dir, base_name, type_definitions):
     path = os.path.join(output_dir, base_name) + ".cs"
     with IndentingStringIO() as writer:
+        writer.write("using System;")
+        writer.write("using System.Collections.Generic;")
+        writer.write("")
         writer.write("namespace lox")
         writer.write("{")
         writer.indent()
@@ -103,6 +106,7 @@ def  main():
         "Expression : Expr expr",
         "Print      : Expr expr",
         "Var        : Token name, Expr initializer",
+        "Block      : List<Stmt> statements",
     ])
 
 if __name__ == "__main__":

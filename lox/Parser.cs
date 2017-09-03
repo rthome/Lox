@@ -221,10 +221,21 @@ namespace lox
             return new Stmt.Expression(value);
         }
 
+        List<Stmt> Block()
+        {
+            var statements = new List<Stmt>();
+            while (!Check(RightBrace) && !IsAtEnd)
+                statements.Add(Declaration());
+            Consume(RightBrace, "Expect '}' at end of block.");
+            return statements;
+        }
+
         Stmt Statement()
         {
             if (Match(Print))
                 return PrintStatement();
+            if (Match(LeftBrace))
+                return new Stmt.Block(Block());
 
             return ExpressionStatement();
         }

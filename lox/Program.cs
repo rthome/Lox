@@ -50,7 +50,16 @@ namespace lox
             if (hadError)
                 return;
 
-            interpreter.Interpret(statements);
+            foreach (var stmt in statements)
+            {
+                if (stmt is Stmt.Expression exprStmt)
+                {
+                    var value = interpreter.Interpret(exprStmt.Expr);
+                    Console.WriteLine(value);
+                }
+                else
+                    interpreter.Interpret(stmt);
+            }
         }
 
         static void RunFile(string path)

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace lox
 {
 	abstract class Stmt
@@ -9,6 +12,7 @@ namespace lox
 			T VisitExpressionStmt(Expression stmt);
 			T VisitPrintStmt(Print stmt);
 			T VisitVarStmt(Var stmt);
+			T VisitBlockStmt(Block stmt);
 		}
 		
 		public class Expression : Stmt
@@ -47,6 +51,18 @@ namespace lox
 			{
 				Name = name;
 				Initializer = initializer;
+			}
+		}
+		
+		public class Block : Stmt
+		{
+			public List<Stmt> Statements { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitBlockStmt(this);
+			
+			public Block(List<Stmt> statements)
+			{
+				Statements = statements;
 			}
 		}
 	}
