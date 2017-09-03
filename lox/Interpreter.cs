@@ -6,6 +6,8 @@ namespace lox
 {
     class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object>
     {
+        readonly Environment environment = new Environment();
+
         bool IsTruthy(object value)
         {
             if (value is null)
@@ -68,6 +70,11 @@ namespace lox
 
             // Unreachable
             return null;
+        }
+
+        object Expr.IVisitor<object>.VisitVariableExpr(Expr.Variable expr)
+        {
+            return environment.Lookup(expr.Name);
         }
 
         object Expr.IVisitor<object>.VisitBinaryExpr(Expr.Binary expr)
@@ -134,6 +141,16 @@ namespace lox
         {
             var value = Evaluate(stmt.Expr);
             Console.WriteLine(Stringify(value));
+            return null;
+        }
+
+        object Stmt.IVisitor<object>.VisitVarStmt(Stmt.Var stmt)
+        {
+            object value = null;
+            if (stmt.Initializer != null)
+                value = Evaluate(stmt.Initializer);
+
+            environment.Define(stmt.Name.Lexeme, value);
             return null;
         }
 

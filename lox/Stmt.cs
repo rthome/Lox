@@ -8,6 +8,7 @@ namespace lox
 		{
 			T VisitExpressionStmt(Expression stmt);
 			T VisitPrintStmt(Print stmt);
+			T VisitVarStmt(Var stmt);
 		}
 		
 		public class Expression : Stmt
@@ -31,6 +32,21 @@ namespace lox
 			public Print(Expr expr)
 			{
 				Expr = expr;
+			}
+		}
+		
+		public class Var : Stmt
+		{
+			public Token Name { get; set; }
+			
+			public Expr Initializer { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitVarStmt(this);
+			
+			public Var(Token name, Expr initializer)
+			{
+				Name = name;
+				Initializer = initializer;
 			}
 		}
 	}

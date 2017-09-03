@@ -96,10 +96,12 @@ def  main():
         "Grouping : Expr expression",
         "Literal  : object value",
         "Unary    : Token op, Expr right",
+        "Variable : Token name",
     ])
     define_ast(output_dir, "Stmt", [
         "Expression : Expr expr",
         "Print      : Expr expr",
+        "Var        : Token name, Expr initializer",
     ])
 
 if __name__ == "__main__":

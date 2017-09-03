@@ -1,4 +1,3 @@
-using System;
 using System.Text;
 
 namespace lox
@@ -48,6 +47,11 @@ namespace lox
         string Expr.IVisitor<string>.VisitUnaryExpr(Expr.Unary expr)
         {
             return Parenthesize(expr.Op.Lexeme, expr.Right);
+        }
+
+        string Expr.IVisitor<string>.VisitVariableExpr(Expr.Variable expr)
+        {
+            return expr.Name.Lexeme;
         }
     }
 }

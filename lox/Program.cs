@@ -58,9 +58,9 @@ namespace lox
             var sourceString = File.ReadAllText(path);
             Run(sourceString);
             if (hadError)
-                Environment.Exit(65);
+                System.Environment.Exit(65);
             if (hadRuntimeError)
-                Environment.Exit(70);
+                System.Environment.Exit(70);
         }
 
         static void RunPrompt()

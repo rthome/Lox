@@ -135,7 +135,10 @@ namespace lox
             
             if (Match(Number, TokenType.String))
                 return new Expr.Literal(Previous.Literal);
-            
+
+            if (Match(Identifier))
+                return new Expr.Variable(Previous);
+
             if (Match(LeftParen))
             {
                 var expr = Expression();
@@ -205,13 +208,40 @@ namespace lox
             return ExpressionStatement();
         }
 
+        Stmt VarDeclaration()
+        {
+            var name = Consume(Identifier, "Expect variable name.");
+            Expr initializer = null;
+            if (Match(Equal))
+                initializer = Expression();
+
+            Consume(Semicolon, "Expect ';' after variable declaration.");
+            return new Stmt.Var(name, initializer);
+        }
+
+        Stmt Declaration()
+        {
+            try
+            {
+                if (Match(Var))
+                    return VarDeclaration();
+
+                return Statement();
+            }
+            catch (ParseErrorException exc)
+            {
+                Synchronize();
+                return null;
+            }
+        }
+
         #endregion
 
         public IEnumerable<Stmt> Parse()
         {
             var statements = new List<Stmt>();
             while (!IsAtEnd)
-                statements.Add(Statement());
+                statements.Add(Declaration());
             return statements;
         }
 

@@ -11,6 +11,7 @@ namespace lox
 			T VisitGroupingExpr(Grouping expr);
 			T VisitLiteralExpr(Literal expr);
 			T VisitUnaryExpr(Unary expr);
+			T VisitVariableExpr(Variable expr);
 		}
 		
 		public class Ternary : Expr
@@ -85,6 +86,18 @@ namespace lox
 			{
 				Op = op;
 				Right = right;
+			}
+		}
+		
+		public class Variable : Expr
+		{
+			public Token Name { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitVariableExpr(this);
+			
+			public Variable(Token name)
+			{
+				Name = name;
 			}
 		}
 	}
