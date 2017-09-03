@@ -12,6 +12,7 @@ namespace lox
 			T VisitLiteralExpr(Literal expr);
 			T VisitUnaryExpr(Unary expr);
 			T VisitVariableExpr(Variable expr);
+			T VisitAssignExpr(Assign expr);
 		}
 		
 		public class Ternary : Expr
@@ -98,6 +99,21 @@ namespace lox
 			public Variable(Token name)
 			{
 				Name = name;
+			}
+		}
+		
+		public class Assign : Expr
+		{
+			public Token Name { get; set; }
+			
+			public Expr Value { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitAssignExpr(this);
+			
+			public Assign(Token name, Expr value)
+			{
+				Name = name;
+				Value = value;
 			}
 		}
 	}

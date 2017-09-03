@@ -154,6 +154,13 @@ namespace lox
             return null;
         }
 
+        object Expr.IVisitor<object>.VisitAssignExpr(Expr.Assign expr)
+        {
+            var value = Evaluate(expr.Value);
+            environment.Assign(expr.Name, value);
+            return value;
+        }
+
         public void Interpret(IEnumerable<Stmt> statements)
         {
             try

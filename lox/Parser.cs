@@ -184,7 +184,28 @@ namespace lox
 
         Expr Comma() => ConsumeBinary(Ternary, TokenType.Comma);
 
-        Expr Expression() => Comma();
+        Expr Assignment()
+        {
+            var expr = Comma();
+
+            if (Match(Equal))
+            {
+                var equals = Previous;
+                var value = Assignment();
+
+                if (expr is Expr.Variable variable)
+                {
+                    var name = variable.Name;
+                    return new Expr.Assign(name, value);
+                }
+
+                Error(equals, "Invalid assignment target.");
+            }
+
+            return expr;
+        }
+
+        Expr Expression() => Assignment();
 
         Stmt PrintStatement()
         {
@@ -228,7 +249,7 @@ namespace lox
 
                 return Statement();
             }
-            catch (ParseErrorException exc)
+            catch (ParseErrorException)
             {
                 Synchronize();
                 return null;
