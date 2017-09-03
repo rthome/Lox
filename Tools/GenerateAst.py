@@ -97,6 +97,10 @@ def  main():
         "Literal  : object value",
         "Unary    : Token op, Expr right",
     ])
+    define_ast(output_dir, "Stmt", [
+        "Expression : Expr expr",
+        "Print      : Expr expr",
+    ])
 
 if __name__ == "__main__":
     main()

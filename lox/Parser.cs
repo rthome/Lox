@@ -183,18 +183,36 @@ namespace lox
 
         Expr Expression() => Comma();
 
+        Stmt PrintStatement()
+        {
+            var value = Expression();
+            Consume(Semicolon, "Expect ';' after value.");
+            return new Stmt.Print(value);
+        }
+
+        Stmt ExpressionStatement()
+        {
+            var value = Expression();
+            Consume(Semicolon, "Expect ';' after value.");
+            return new Stmt.Expression(value);
+        }
+
+        Stmt Statement()
+        {
+            if (Match(Print))
+                return PrintStatement();
+
+            return ExpressionStatement();
+        }
+
         #endregion
 
-        public Expr Parse()
+        public IEnumerable<Stmt> Parse()
         {
-            try
-            {
-                return Expression();
-            }
-            catch (ParseErrorException)
-            {
-                return null;
-            }
+            var statements = new List<Stmt>();
+            while (!IsAtEnd)
+                statements.Add(Statement());
+            return statements;
         }
 
         public Parser(IEnumerable<Token> tokens)

@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <Target Name="GenerateAstTarget" BeforeTargets="Build">
-    <Exec Command="Tools/GenerateAst.py ./lox" />
+    <Exec Command="Tools\GenerateAst.py ./lox" />
   </Target>
 
   <PropertyGroup>

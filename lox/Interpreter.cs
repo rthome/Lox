@@ -1,9 +1,10 @@
 using System;
+using System.Collections.Generic;
 using static lox.TokenType;
 
 namespace lox
 {
-    class Interpreter : Expr.IVisitor<object>
+    class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object>
     {
         bool IsTruthy(object value)
         {
@@ -46,6 +47,8 @@ namespace lox
         }
 
         object Evaluate(Expr expr) => expr.Accept(this);
+
+        void Execute(Stmt statement) => statement.Accept(this);
 
         object Expr.IVisitor<object>.VisitLiteralExpr(Expr.Literal expr) => expr.Value;
 
@@ -114,15 +117,32 @@ namespace lox
 
         object Expr.IVisitor<object>.VisitTernaryExpr(Expr.Ternary expr)
         {
-            throw new NotImplementedException();
+            var condValue = Evaluate(expr.Cond);
+            if (IsTruthy(condValue))
+                return Evaluate(expr.Left);
+            else
+                return Evaluate(expr.Right);
         }
 
-        public void Interpret(Expr expression)
+        object Stmt.IVisitor<object>.VisitExpressionStmt(Stmt.Expression stmt)
+        {
+            Evaluate(stmt.Expr);
+            return null;
+        }
+
+        object Stmt.IVisitor<object>.VisitPrintStmt(Stmt.Print stmt)
+        {
+            var value = Evaluate(stmt.Expr);
+            Console.WriteLine(Stringify(value));
+            return null;
+        }
+
+        public void Interpret(IEnumerable<Stmt> statements)
         {
             try
             {
-                var value = Evaluate(expression);
-                Console.WriteLine(Stringify(value));
+                foreach (var stmt in statements)
+                    Execute(stmt);
             }
             catch (RuntimeException exc)
             {
