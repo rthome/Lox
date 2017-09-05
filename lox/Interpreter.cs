@@ -43,7 +43,7 @@ namespace lox
             throw new RuntimeException(op, "Operands must be numbers.");
         }
 
-        string Stringify(object value)
+        public string Stringify(object value)
         {
             if (value == null)
                 return "nil";

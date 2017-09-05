@@ -55,7 +55,7 @@ namespace lox
                 if (stmt is Stmt.Expression exprStmt)
                 {
                     var value = interpreter.Interpret(exprStmt.Expr);
-                    Console.WriteLine(value);
+                    Console.WriteLine($"=> {interpreter.Stringify(value)}");
                 }
                 else
                     interpreter.Interpret(stmt);
