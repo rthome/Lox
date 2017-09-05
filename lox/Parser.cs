@@ -159,6 +159,37 @@ namespace lox
             throw Error(Peek, "Expected expression.");
         }
 
+        Expr FinishCall(Expr callee)
+        {
+            var arguments = new List<Expr>();
+            if (!Check(RightParen))
+            {
+                do
+                {
+                    if (arguments.Count >= 8)
+                        Error(Peek, "Cannot have more than 8 arguments.");
+                    arguments.Add(Expression());
+                } while (Match(TokenType.Comma));
+            }
+
+            var paren = Consume(RightParen, "Expect ')' after arguments.");
+
+            return new Expr.Call(callee, paren, arguments);
+        }
+
+        Expr Call()
+        {
+            var expr = Primary();
+            while (true)
+            {
+                if (Match(LeftParen))
+                    expr = FinishCall(expr);
+                else
+                    break;
+            }
+            return expr;
+        }
+
         Expr Unary()
         {
             if (Match(Bang, Minus))
@@ -168,7 +199,7 @@ namespace lox
                 return new Expr.Unary(op, right);
             }
 
-            return Primary();
+            return Call();
         }
 
         Expr Factor() => ConsumeBinary(Unary, Slash, Star);
@@ -285,11 +316,55 @@ namespace lox
             return new Stmt.Print(value);
         }
 
+        Stmt ReturnStatement()
+        {
+            var keyword = Previous;
+            Expr value = null;
+            if (!Check(Semicolon))
+                value = Expression();
+
+            Consume(Semicolon, "Expect ';' after return value");
+            return new Stmt.Return(keyword, value);
+        }
+
+        Stmt WhileStatement()
+        {
+            Consume(LeftParen, "Expect '(' after 'while'.");
+            var cond = Expression();
+            Consume(RightParen, "Expect ')' after condition.");
+            var body = Statement();
+
+            return new Stmt.While(cond, body);
+        }
+
         Stmt ExpressionStatement()
         {
             var value = Expression();
             Consume(Semicolon, "Expect ';' after value.");
             return new Stmt.Expression(value);
+        }
+
+        Stmt.Function Function(string kind)
+        {
+            var name = Consume(Identifier, $"Expect {kind} name.");
+            Consume(LeftParen, $"Expect '(' after {kind} name.");
+
+            var parameters = new List<Token>();
+            if (!Check(RightParen))
+            {
+                do
+                {
+                    if (parameters.Count >= 8)
+                        Error(Peek, "Cannot have more than 8 parameters.");
+                    parameters.Add(Consume(Identifier, "Expect parameter name."));
+                } while (Match(TokenType.Comma));
+            }
+
+            Consume(RightParen, "Expect ')' after parameters.");
+            Consume(LeftBrace, $"Expect '{{' before {kind} body.");
+
+            var body = Block();
+            return new Stmt.Function(name, parameters, body);
         }
 
         List<Stmt> Block()
@@ -304,11 +379,13 @@ namespace lox
         Stmt Statement()
         {
             if (Match(For))
-                ForStatement();
+                return ForStatement();
             if (Match(If))
                 return IfStatement();
             if (Match(Print))
                 return PrintStatement();
+            if (Match(Return))
+                return ReturnStatement();
             if (Match(While))
                 return WhileStatement();
             if (Match(LeftBrace))
@@ -328,20 +405,12 @@ namespace lox
             return new Stmt.Var(name, initializer);
         }
 
-        Stmt WhileStatement()
-        {
-            Consume(LeftParen, "Expect '(' after 'while'.");
-            var cond = Expression();
-            Consume(RightParen, "Expect ')' after condition.");
-            var body = Statement();
-
-            return new Stmt.While(cond, body);
-        }
-
         Stmt Declaration()
         {
             try
             {
+                if (Match(Fun))
+                    return Function("function");
                 if (Match(Var))
                     return VarDeclaration();
 

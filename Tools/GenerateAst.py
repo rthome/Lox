@@ -96,6 +96,7 @@ def  main():
     define_ast(output_dir, "Expr", [
         "Ternary  : Expr cond, Expr left, Expr right",
         "Binary   : Expr left, Token op, Expr right",
+        "Call     : Expr callee, Token paren, List<Expr> arguments",
         "Grouping : Expr expression",
         "Literal  : object value",
         "Logical  : Expr left, Token op, Expr right",
@@ -105,8 +106,10 @@ def  main():
     ])
     define_ast(output_dir, "Stmt", [
         "Expression : Expr expr",
+        "Function   : Token name, List<Token> parameters, List<Stmt> body",
         "If         : Expr cond, Stmt thenBranch, Stmt elseBranch",
         "Print      : Expr expr",
+        "Return     : Token keyword, Expr value",
         "Var        : Token name, Expr initializer",
         "While      : Expr cond, Stmt body",
         "Block      : List<Stmt> statements",

@@ -11,6 +11,7 @@ namespace lox
 		{
 			T VisitTernaryExpr(Ternary expr);
 			T VisitBinaryExpr(Binary expr);
+			T VisitCallExpr(Call expr);
 			T VisitGroupingExpr(Grouping expr);
 			T VisitLiteralExpr(Literal expr);
 			T VisitLogicalExpr(Logical expr);
@@ -52,6 +53,24 @@ namespace lox
 				Left = left;
 				Op = op;
 				Right = right;
+			}
+		}
+		
+		public class Call : Expr
+		{
+			public Expr Callee { get; set; }
+			
+			public Token Paren { get; set; }
+			
+			public List<Expr> Arguments { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitCallExpr(this);
+			
+			public Call(Expr callee, Token paren, List<Expr> arguments)
+			{
+				Callee = callee;
+				Paren = paren;
+				Arguments = arguments;
 			}
 		}
 		

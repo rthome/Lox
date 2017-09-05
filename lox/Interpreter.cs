@@ -6,7 +6,10 @@ namespace lox
 {
     class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object>
     {
-        Environment environment = new Environment();
+        readonly Environment globals = new Environment();
+        Environment environment;
+
+        public Environment Globals => globals;
 
         bool IsTruthy(object value)
         {
@@ -44,15 +47,15 @@ namespace lox
         {
             if (value == null)
                 return "nil";
-            
+
             return value.ToString();
         }
 
-        object Evaluate(Expr expr) => expr.Accept(this);
+        public object Evaluate(Expr expr) => expr.Accept(this);
 
-        void Execute(Stmt statement) => statement.Accept(this);
+        public void Execute(Stmt statement) => statement.Accept(this);
 
-        void ExecuteBlock(IEnumerable<Stmt> statements, Environment environment)
+        public void ExecuteBlock(IEnumerable<Stmt> statements, Environment environment)
         {
             var previous = this.environment;
             try
@@ -64,6 +67,44 @@ namespace lox
             finally
             {
                 this.environment = previous;
+            }
+        }
+
+        public void Interpret(IEnumerable<Stmt> statements)
+        {
+            try
+            {
+                foreach (var stmt in statements)
+                    Execute(stmt);
+            }
+            catch (RuntimeException exc)
+            {
+                Program.RuntimeError(exc);
+            }
+        }
+
+        public object Interpret(Expr expression)
+        {
+            try
+            {
+                return Evaluate(expression);
+            }
+            catch (RuntimeException exc)
+            {
+                Program.RuntimeError(exc);
+                return null;
+            }
+        }
+
+        public void Interpret(Stmt statement)
+        {
+            try
+            {
+                Execute(statement);
+            }
+            catch (RuntimeException exc)
+            {
+                Program.RuntimeError(exc);
             }
         }
 
@@ -91,7 +132,7 @@ namespace lox
         object Expr.IVisitor<object>.VisitUnaryExpr(Expr.Unary expr)
         {
             var right = Evaluate(expr.Right);
-            switch(expr.Op.Type)
+            switch (expr.Op.Type)
             {
                 case Minus:
                     CheckNumberOperand(expr.Op, right);
@@ -113,7 +154,7 @@ namespace lox
         {
             var right = Evaluate(expr.Right);
             var left = Evaluate(expr.Left);
-            switch(expr.Op.Type)
+            switch (expr.Op.Type)
             {
                 case Minus:
                     CheckNumberOperands(expr.Op, left, right);
@@ -154,6 +195,25 @@ namespace lox
             return null;
         }
 
+        object Expr.IVisitor<object>.VisitCallExpr(Expr.Call expr)
+        {
+            var callee = Evaluate(expr.Callee);
+
+            var arguments = new List<object>();
+            foreach (var argument in expr.Arguments)
+                arguments.Add(Evaluate(argument));
+
+            if (callee is ICallable function)
+            {
+                if (arguments.Count != function.Arity)
+                    throw new RuntimeException(expr.Paren, $"Expected {function.Arity} arguments but got {arguments.Count}.");
+
+                return function.Call(this, arguments);
+            }
+            else
+                throw new RuntimeException(expr.Paren, "Can only call functions and classes.");
+        }
+
         object Expr.IVisitor<object>.VisitTernaryExpr(Expr.Ternary expr)
         {
             var condValue = Evaluate(expr.Cond);
@@ -176,6 +236,13 @@ namespace lox
             return null;
         }
 
+        object Stmt.IVisitor<object>.VisitFunctionStmt(Stmt.Function stmt)
+        {
+            var function = new Function(stmt, environment);
+            environment.Define(stmt.Name.Lexeme, function);
+            return null;
+        }
+
         object Stmt.IVisitor<object>.VisitIfStmt(Stmt.If stmt)
         {
             if (IsTruthy(Evaluate(stmt.Cond)))
@@ -190,6 +257,15 @@ namespace lox
             var value = Evaluate(stmt.Expr);
             Console.WriteLine(Stringify(value));
             return null;
+        }
+
+        object Stmt.IVisitor<object>.VisitReturnStmt(Stmt.Return stmt)
+        {
+            object value = null;
+            if (stmt.Value != null)
+                value = Evaluate(stmt.Value);
+
+            throw new ReturnValue(value);
         }
 
         object Stmt.IVisitor<object>.VisitVarStmt(Stmt.Var stmt)
@@ -215,42 +291,11 @@ namespace lox
             return null;
         }
 
-        public void Interpret(IEnumerable<Stmt> statements)
+        public Interpreter()
         {
-            try
-            {
-                foreach (var stmt in statements)
-                    Execute(stmt);
-            }
-            catch (RuntimeException exc)
-            {
-                Program.RuntimeError(exc);
-            }
-        }
+            environment = globals;
 
-        public object Interpret(Expr expression)
-        {
-            try
-            {
-                return Evaluate(expression);
-            }
-            catch (RuntimeException exc)
-            {
-                Program.RuntimeError(exc);
-                return null;
-            }
-        }
-
-        public void Interpret(Stmt statement)
-        {
-            try
-            {
-                Execute(statement);
-            }
-            catch (RuntimeException exc)
-            {
-                Program.RuntimeError(exc);
-            }
+            globals.Define("clock", new NativeFunctions.ClockFunction());
         }
     }
 }
