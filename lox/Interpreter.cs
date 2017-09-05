@@ -230,6 +230,11 @@ namespace lox
             return value;
         }
 
+        object Stmt.IVisitor<object>.VisitBreakStmt(Stmt.Break stmt)
+        {
+            throw new BreakStatement();
+        }
+
         object Stmt.IVisitor<object>.VisitExpressionStmt(Stmt.Expression stmt)
         {
             Evaluate(stmt.Expr);
@@ -265,7 +270,7 @@ namespace lox
             if (stmt.Value != null)
                 value = Evaluate(stmt.Value);
 
-            throw new ReturnValue(value);
+            throw new ReturnStatement(value);
         }
 
         object Stmt.IVisitor<object>.VisitVarStmt(Stmt.Var stmt)
@@ -280,8 +285,14 @@ namespace lox
 
         object Stmt.IVisitor<object>.VisitWhileStmt(Stmt.While stmt)
         {
-            while (IsTruthy(Evaluate(stmt.Cond)))
-                Execute(stmt.Body);
+            try
+            {
+                while (IsTruthy(Evaluate(stmt.Cond)))
+                    Execute(stmt.Body);
+            }
+            catch (BreakStatement)
+            {   
+            }
             return null;
         }
 

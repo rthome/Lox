@@ -19,7 +19,7 @@ namespace lox
             {
                 interpreter.ExecuteBlock(declaration.Body, env);
             }
-            catch (ReturnValue returnValue)
+            catch (ReturnStatement returnValue)
             {
                 return returnValue.Value;
             }

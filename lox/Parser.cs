@@ -8,6 +8,7 @@ namespace lox
     {
         readonly List<Token> tokens = new List<Token>();
         int current = 0;
+        int loopDepth = 0;
 
         #region Helper Members
 
@@ -16,6 +17,8 @@ namespace lox
         Token Previous => tokens[current - 1];
 
         bool IsAtEnd => Peek.Type == EOF;
+
+        bool IsInLoop => loopDepth > 0;
 
         Token Advance()
         {
@@ -54,6 +57,16 @@ namespace lox
         {
             Program.Error(token, message);
             return new ParseErrorException();
+        }
+
+        void EnterLoop()
+        {
+            loopDepth++;
+        }
+
+        void ExitLoop()
+        {
+            loopDepth = Math.Max(0, loopDepth - 1);
         }
 
         void Synchronize()
@@ -274,7 +287,9 @@ namespace lox
                 increment = Expression();
             Consume(RightParen, "Expect ')' after for clause.");
 
+            EnterLoop();
             var body = Statement();
+            ExitLoop();
 
             if (increment != null)
             {
@@ -332,7 +347,10 @@ namespace lox
             Consume(LeftParen, "Expect '(' after 'while'.");
             var cond = Expression();
             Consume(RightParen, "Expect ')' after condition.");
+
+            EnterLoop();
             var body = Statement();
+            ExitLoop();
 
             return new Stmt.While(cond, body);
         }
@@ -378,6 +396,16 @@ namespace lox
 
         Stmt Statement()
         {
+            if (Match(Break))
+            {
+                if (!IsInLoop)
+                    throw Error(Previous, "Encountered 'break' while not in a loop.");
+
+                var keyword = Previous;
+                Consume(Semicolon, "Expect ';' after a 'break'.");
+                return new Stmt.Break(keyword);
+            }
+
             if (Match(For))
                 return ForStatement();
             if (Match(If))

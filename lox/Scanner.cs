@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using static lox.TokenType;
@@ -12,6 +11,7 @@ namespace lox
         static readonly Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>
         {
             {"and",    And},
+            {"break",  Break},
             {"class",  Class},
             {"else",   Else},
             {"false",  False},

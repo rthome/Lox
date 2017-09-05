@@ -2,11 +2,11 @@
 
 namespace lox
 {
-    class ReturnValue : Exception
+    class ReturnStatement : Exception
     {
         public object Value { get; private set; }
 
-        public ReturnValue(object value)
+        public ReturnStatement(object value)
         {
             Value = value;
         }

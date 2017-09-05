@@ -34,6 +34,7 @@ namespace lox
 
         // Keywords
         And,
+        Break,
         Class,
         Else,
         False,

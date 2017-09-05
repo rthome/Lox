@@ -9,6 +9,7 @@ namespace lox
 		
 		public interface IVisitor<T>
 		{
+			T VisitBreakStmt(Break stmt);
 			T VisitExpressionStmt(Expression stmt);
 			T VisitFunctionStmt(Function stmt);
 			T VisitIfStmt(If stmt);
@@ -17,6 +18,18 @@ namespace lox
 			T VisitVarStmt(Var stmt);
 			T VisitWhileStmt(While stmt);
 			T VisitBlockStmt(Block stmt);
+		}
+		
+		public class Break : Stmt
+		{
+			public Token Keyword { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitBreakStmt(this);
+			
+			public Break(Token keyword)
+			{
+				Keyword = keyword;
+			}
 		}
 		
 		public class Expression : Stmt

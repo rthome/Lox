@@ -105,6 +105,7 @@ def  main():
         "Assign   : Token name, Expr value",
     ])
     define_ast(output_dir, "Stmt", [
+        "Break      : Token keyword",
         "Expression : Expr expr",
         "Function   : Token name, List<Token> parameters, List<Stmt> body",
         "If         : Expr cond, Stmt thenBranch, Stmt elseBranch",
