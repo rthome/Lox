@@ -98,14 +98,17 @@ def  main():
         "Binary   : Expr left, Token op, Expr right",
         "Grouping : Expr expression",
         "Literal  : object value",
+        "Logical  : Expr left, Token op, Expr right",
         "Unary    : Token op, Expr right",
         "Variable : Token name",
         "Assign   : Token name, Expr value",
     ])
     define_ast(output_dir, "Stmt", [
         "Expression : Expr expr",
+        "If         : Expr cond, Stmt thenBranch, Stmt elseBranch",
         "Print      : Expr expr",
         "Var        : Token name, Expr initializer",
+        "While      : Expr cond, Stmt body",
         "Block      : List<Stmt> statements",
     ])
 

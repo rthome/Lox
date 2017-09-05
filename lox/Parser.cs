@@ -59,11 +59,11 @@ namespace lox
         void Synchronize()
         {
             Advance();
-            while(!IsAtEnd)
+            while (!IsAtEnd)
             {
                 if (Previous.Type == Semicolon)
                     return;
-                
+
                 switch (Peek.Type)
                 {
                     case Class:
@@ -88,7 +88,7 @@ namespace lox
             throw Error(Peek, message);
         }
 
-        Expr ConsumeBinaryNoLeft(Func<Expr> nextRule, params TokenType[] matchedTypes)
+        Expr ConsumeBinaryOperatorNoLeft(Func<Expr> nextRule, params TokenType[] matchedTypes)
         {
             if (Match(matchedTypes))
             {
@@ -108,16 +108,26 @@ namespace lox
                 return nextRule();
         }
 
-        Expr ConsumeBinary(Func<Expr> nextRule, params TokenType[] matchedTypes)
+        Expr ConsumeBinaryOperator(Func<Expr> nextRule, Func<Expr, Token, Expr, Expr> ctor, params TokenType[] matchedTypes)
         {
-            var expr = ConsumeBinaryNoLeft(nextRule, matchedTypes);
+            var expr = ConsumeBinaryOperatorNoLeft(nextRule, matchedTypes);
             while (Match(matchedTypes))
             {
                 var op = Previous;
                 var right = nextRule();
-                expr = new Expr.Binary(expr, op, right);
+                expr = ctor(expr, op, right);
             }
             return expr;
+        }
+
+        Expr ConsumeLogical(Func<Expr> nextRule, params TokenType[] matchedTypes)
+        {
+            return ConsumeBinaryOperator(nextRule, (l, o, r) => new Expr.Logical(l, o, r), matchedTypes);
+        }
+
+        Expr ConsumeBinary(Func<Expr> nextRule, params TokenType[] matchedTypes)
+        {
+            return ConsumeBinaryOperator(nextRule, (l, o, r) => new Expr.Binary(l, o, r), matchedTypes);
         }
 
         #endregion
@@ -132,7 +142,7 @@ namespace lox
                 return new Expr.Literal(true);
             if (Match(Nil))
                 return new Expr.Literal(null);
-            
+
             if (Match(Number, TokenType.String))
                 return new Expr.Literal(Previous.Literal);
 
@@ -184,9 +194,13 @@ namespace lox
 
         Expr Comma() => ConsumeBinary(Ternary, TokenType.Comma);
 
+        Expr And() => ConsumeLogical(Comma, TokenType.And);
+
+        Expr Or() => ConsumeLogical(And, TokenType.Or);
+
         Expr Assignment()
         {
-            var expr = Comma();
+            var expr = Or();
 
             if (Match(Equal))
             {
@@ -206,6 +220,63 @@ namespace lox
         }
 
         Expr Expression() => Assignment();
+
+        Stmt ForStatement()
+        {
+            Consume(LeftParen, "Expect '(' after 'for'.");
+
+            Stmt initializer;
+            if (Match(Semicolon))
+                initializer = null;
+            else if (Match(Var))
+                initializer = VarDeclaration();
+            else
+                initializer = ExpressionStatement();
+
+            Expr condition = null;
+            if (!Check(Semicolon))
+                condition = Expression();
+            Consume(Semicolon, "Expect ';' after loop condition.");
+
+            Expr increment = null;
+            if (!Check(RightParen))
+                increment = Expression();
+            Consume(RightParen, "Expect ')' after for clause.");
+
+            var body = Statement();
+
+            if (increment != null)
+            {
+                body = new Stmt.Block(new List<Stmt>
+                {
+                    body,
+                    new Stmt.Expression(increment),
+                });
+            }
+
+            if (condition == null)
+                condition = new Expr.Literal(true);
+            body = new Stmt.While(condition, body);
+
+            if (initializer != null)
+                body = new Stmt.Block(new List<Stmt> { initializer, body });
+
+            return body;
+        }
+
+        Stmt IfStatement()
+        {
+            Consume(LeftParen, "Expect '(' after 'if'.");
+            var condition = Expression();
+            Consume(RightParen, "Expect ')' after if condition.");
+
+            var thenBranch = Statement();
+            Stmt elseBranch = null;
+            if (Match(Else))
+                elseBranch = Statement();
+
+            return new Stmt.If(condition, thenBranch, elseBranch);
+        }
 
         Stmt PrintStatement()
         {
@@ -232,8 +303,14 @@ namespace lox
 
         Stmt Statement()
         {
+            if (Match(For))
+                ForStatement();
+            if (Match(If))
+                return IfStatement();
             if (Match(Print))
                 return PrintStatement();
+            if (Match(While))
+                return WhileStatement();
             if (Match(LeftBrace))
                 return new Stmt.Block(Block());
 
@@ -249,6 +326,16 @@ namespace lox
 
             Consume(Semicolon, "Expect ';' after variable declaration.");
             return new Stmt.Var(name, initializer);
+        }
+
+        Stmt WhileStatement()
+        {
+            Consume(LeftParen, "Expect '(' after 'while'.");
+            var cond = Expression();
+            Consume(RightParen, "Expect ')' after condition.");
+            var body = Statement();
+
+            return new Stmt.While(cond, body);
         }
 
         Stmt Declaration()

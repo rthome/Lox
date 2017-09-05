@@ -13,6 +13,7 @@ namespace lox
 			T VisitBinaryExpr(Binary expr);
 			T VisitGroupingExpr(Grouping expr);
 			T VisitLiteralExpr(Literal expr);
+			T VisitLogicalExpr(Logical expr);
 			T VisitUnaryExpr(Unary expr);
 			T VisitVariableExpr(Variable expr);
 			T VisitAssignExpr(Assign expr);
@@ -75,6 +76,24 @@ namespace lox
 			public Literal(object value)
 			{
 				Value = value;
+			}
+		}
+		
+		public class Logical : Expr
+		{
+			public Expr Left { get; set; }
+			
+			public Token Op { get; set; }
+			
+			public Expr Right { get; set; }
+			
+			public override T Accept<T>(IVisitor<T> visitor) => visitor.VisitLogicalExpr(this);
+			
+			public Logical(Expr left, Token op, Expr right)
+			{
+				Left = left;
+				Op = op;
+				Right = right;
 			}
 		}
 		
