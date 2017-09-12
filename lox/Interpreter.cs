@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using Void = lox.Util.Void;
 using static lox.TokenType;
 
 namespace lox
 {
-    class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object>
+    class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<Void>
     {
         readonly Environment globals = new Environment();
+        readonly Dictionary<Expr, int> locals = new Dictionary<Expr, int>();
         Environment environment;
 
         public Environment Globals => globals;
@@ -43,6 +45,14 @@ namespace lox
             throw new RuntimeException(op, "Operands must be numbers.");
         }
 
+        object LookupVariable(Token name, Expr expr)
+        {
+            if (locals.TryGetValue(expr, out var distance))
+                return environment.LookupAt(distance, name.Lexeme);
+            else
+                return globals.Lookup(name);
+        }
+
         public string Stringify(object value)
         {
             if (value == null)
@@ -50,6 +60,8 @@ namespace lox
 
             return value.ToString();
         }
+
+        public void Resolve(Expr expr, int depth) => locals[expr] = depth;
 
         public object Evaluate(Expr expr) => expr.Accept(this);
 
@@ -147,7 +159,7 @@ namespace lox
 
         object Expr.IVisitor<object>.VisitVariableExpr(Expr.Variable expr)
         {
-            return environment.Lookup(expr.Name);
+            return LookupVariable(expr.Name, expr);
         }
 
         object Expr.IVisitor<object>.VisitBinaryExpr(Expr.Binary expr)
@@ -226,29 +238,34 @@ namespace lox
         object Expr.IVisitor<object>.VisitAssignExpr(Expr.Assign expr)
         {
             var value = Evaluate(expr.Value);
-            environment.Assign(expr.Name, value);
+
+            if (locals.TryGetValue(expr, out var distance))
+                environment.AssignAt(distance, expr.Name, value);
+            else
+                globals.Assign(expr.Name, value);
+
             return value;
         }
 
-        object Stmt.IVisitor<object>.VisitBreakStmt(Stmt.Break stmt)
+        Void Stmt.IVisitor<Void>.VisitBreakStmt(Stmt.Break stmt)
         {
             throw new BreakStatement();
         }
 
-        object Stmt.IVisitor<object>.VisitExpressionStmt(Stmt.Expression stmt)
+        Void Stmt.IVisitor<Void>.VisitExpressionStmt(Stmt.Expression stmt)
         {
             Evaluate(stmt.Expr);
             return null;
         }
 
-        object Stmt.IVisitor<object>.VisitFunctionStmt(Stmt.Function stmt)
+        Void Stmt.IVisitor<Void>.VisitFunctionStmt(Stmt.Function stmt)
         {
             var function = new Function(stmt, environment);
             environment.Define(stmt.Name.Lexeme, function);
             return null;
         }
 
-        object Stmt.IVisitor<object>.VisitIfStmt(Stmt.If stmt)
+        Void Stmt.IVisitor<Void>.VisitIfStmt(Stmt.If stmt)
         {
             if (IsTruthy(Evaluate(stmt.Cond)))
                 Execute(stmt.ThenBranch);
@@ -257,14 +274,14 @@ namespace lox
             return null;
         }
 
-        object Stmt.IVisitor<object>.VisitPrintStmt(Stmt.Print stmt)
+        Void Stmt.IVisitor<Void>.VisitPrintStmt(Stmt.Print stmt)
         {
             var value = Evaluate(stmt.Expr);
             Console.WriteLine(Stringify(value));
             return null;
         }
 
-        object Stmt.IVisitor<object>.VisitReturnStmt(Stmt.Return stmt)
+        Void Stmt.IVisitor<Void>.VisitReturnStmt(Stmt.Return stmt)
         {
             object value = null;
             if (stmt.Value != null)
@@ -273,7 +290,7 @@ namespace lox
             throw new ReturnStatement(value);
         }
 
-        object Stmt.IVisitor<object>.VisitVarStmt(Stmt.Var stmt)
+        Void Stmt.IVisitor<Void>.VisitVarStmt(Stmt.Var stmt)
         {
             object value = null;
             if (stmt.Initializer != null)
@@ -283,7 +300,7 @@ namespace lox
             return null;
         }
 
-        object Stmt.IVisitor<object>.VisitWhileStmt(Stmt.While stmt)
+        Void Stmt.IVisitor<Void>.VisitWhileStmt(Stmt.While stmt)
         {
             try
             {
@@ -296,7 +313,7 @@ namespace lox
             return null;
         }
 
-        object Stmt.IVisitor<object>.VisitBlockStmt(Stmt.Block stmt)
+        Void Stmt.IVisitor<Void>.VisitBlockStmt(Stmt.Block stmt)
         {
             ExecuteBlock(stmt.Statements, new Environment(environment));
             return null;

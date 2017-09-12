@@ -11,6 +11,8 @@ namespace lox
 
         static readonly Interpreter interpreter = new Interpreter();
 
+        static bool runningInteractively;
+
         #region Error Reporting
 
         public static void Error(Token token, string message)
@@ -50,16 +52,27 @@ namespace lox
             if (hadError)
                 return;
 
-            foreach (var stmt in statements)
+            var resolver = new Resolver(interpreter);
+            resolver.Resolve(statements);
+
+            if (hadError)
+                return;
+
+            if (runningInteractively)
             {
-                if (stmt is Stmt.Expression exprStmt)
+                foreach (var stmt in statements)
                 {
-                    var value = interpreter.Interpret(exprStmt.Expr);
-                    Console.WriteLine($"=> {interpreter.Stringify(value)}");
+                    if (stmt is Stmt.Expression exprStmt)
+                    {
+                        var value = interpreter.Interpret(exprStmt.Expr);
+                        Console.WriteLine($"=> {interpreter.Stringify(value)}");
+                    }
+                    else
+                        interpreter.Interpret(stmt);
                 }
-                else
-                    interpreter.Interpret(stmt);
             }
+            else
+                interpreter.Interpret(statements);
         }
 
         static void RunFile(string path)
@@ -74,6 +87,7 @@ namespace lox
 
         static void RunPrompt()
         {
+            runningInteractively = true;
             while (true)
             {
                 Console.Write("> ");
