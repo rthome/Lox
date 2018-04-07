@@ -1,9 +1,6 @@
-﻿# CMakeList.txt : CMake project for clox, include source and define
-# project specific logic here.
-#
-cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required (VERSION 3.8)
 
-# Add source to this project's executable.
-add_executable (clox "clox.cpp" "clox.h")
+SET(HDRS "common.h" "memory.h" "chunk.h" "debug.h" "value.h")
+SET(SRCS "clox.cpp" "chunk.cpp" "memory.cpp" "debug.cpp" "value.cpp")
 
-# TODO: Add tests and install targets if needed.
+add_executable (clox ${SRCS} ${HDRS})
