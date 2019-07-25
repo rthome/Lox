@@ -1,10 +1,9 @@
 #include <stdio.h>
 
 #include "common.h"
+#include "compiler.h"
 #include "debug.h"
 #include "vm.h"
-
-static VM vm;
 
 static void reset_stack(VM *vm)
 {
@@ -85,13 +84,10 @@ static InterpretResult run(VM *vm)
 #undef READ_BYTE
 }
 
-InterpretResult interpret(VM *vm, Chunk *chunk)
+InterpretResult interpret(VM *vm, const char* source)
 {
-	vm->chunk = chunk;
-	vm->ip = vm->chunk->code;
-
-	InterpretResult result = run(vm);
-	return result;
+    compile(source);
+    return INTERPRET_OK;
 }
 
 void push(VM *vm, Value value)

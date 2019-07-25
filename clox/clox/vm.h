@@ -10,7 +10,7 @@ enum InterpretResult
 	INTERPRET_RUNTIME_ERROR,
 };
 
-#define STACK_MAX 256
+constexpr auto STACK_MAX = 256;
 
 struct VM
 {
@@ -23,6 +23,6 @@ struct VM
 void init_vm(VM *vm);
 void free_vm(VM *vm);
 
-InterpretResult interpret(VM *vm, Chunk *chunk);
+InterpretResult interpret(VM *vm, const char* source);
 void push(VM *vm, Value value);
 Value pop(VM *vm);
