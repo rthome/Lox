@@ -272,6 +272,7 @@ bool compile(const char* source, Chunk* chunk)
     advance(&parser);
     expression(&parser);
     consume(&parser, TOKEN_EOF, "Expect end of expression");
+    end_compiler(&parser);
 
     return !parser.had_error;
 }
