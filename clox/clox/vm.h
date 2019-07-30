@@ -5,24 +5,24 @@
 
 enum InterpretResult
 {
-	INTERPRET_OK,
-	INTERPRET_COMPILE_ERROR,
-	INTERPRET_RUNTIME_ERROR,
+    INTERPRET_OK,
+    INTERPRET_COMPILE_ERROR,
+    INTERPRET_RUNTIME_ERROR,
 };
 
-constexpr auto STACK_MAX = 256;
+constexpr int STACK_MAX = 256;
 
 struct VM
 {
-	Chunk *chunk;
-	uint8_t *ip;
-	Value stack[STACK_MAX];
-	Value *stack_top;
+    Chunk* chunk;
+    uint8_t* ip;
+    Value stack[STACK_MAX];
+    Value* stack_top;
 };
 
-void init_vm(VM *vm);
-void free_vm(VM *vm);
+void init_vm(VM& vm);
+void free_vm(VM& vm);
 
-InterpretResult interpret(VM *vm, const char* source);
-void push(VM *vm, Value value);
-Value pop(VM *vm);
+InterpretResult interpret(VM& vm, const char* source);
+void push(VM& vm, Value value);
+Value pop(VM& vm);

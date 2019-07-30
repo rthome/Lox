@@ -3,30 +3,30 @@
 #include "memory.h"
 #include "value.h"
 
-void init_value_array(ValueArray *valarray)
+void init_value_array(ValueArray& valarray)
 {
-	valarray->capacity = 0;
-	valarray->count = 0;
-	valarray->values = nullptr;
+    valarray.capacity = 0;
+    valarray.count = 0;
+    valarray.values = nullptr;
 }
 
-void free_value_array(ValueArray *valarray)
+void free_value_array(ValueArray& valarray)
 {
-	FREE_ARRAY(Value, valarray->values, valarray->capacity);
-	init_value_array(valarray);
+    FREE_ARRAY(Value, valarray.values, valarray.capacity);
+    init_value_array(valarray);
 }
 
-void write_value_array(ValueArray *valarray, Value value)
+void write_value_array(ValueArray& valarray, Value value)
 {
-	if (valarray->capacity < valarray->count + 1)
-	{
-		int old_capactity = valarray->capacity;
-		valarray->capacity = GROW_CAPACITY(old_capactity);
-		valarray->values = GROW_ARRAY(valarray->values, Value, old_capactity, valarray->capacity);
-	}
+    if (valarray.capacity < valarray.count + 1)
+    {
+        int old_capactity = valarray.capacity;
+        valarray.capacity = GROW_CAPACITY(old_capactity);
+        valarray.values = GROW_ARRAY(valarray.values, Value, old_capactity, valarray.capacity);
+    }
 
-	valarray->values[valarray->count] = value;
-	valarray->count++;
+    valarray.values[valarray.count] = value;
+    valarray.count++;
 }
 
 void print_value(Value value)
@@ -40,7 +40,7 @@ void print_value(Value value)
         printf(as_bool(value) ? "true" : "false");
         break;
     case VAL_NUMBER:
-	    printf("%g", as_number(value));
+        printf("%g", as_number(value));
         break;
     }
 }

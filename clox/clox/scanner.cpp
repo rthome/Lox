@@ -4,53 +4,53 @@
 #include "common.h"
 #include "scanner.h"
 
-static inline bool is_at_end(ScannerState* state)
+static inline bool is_at_end(const ScannerState& state)
 {
-    return *state->current == '\0';
+    return *state.current == '\0';
 }
 
-static inline bool is_digit(char c)
+static constexpr bool is_digit(char c)
 {
     return c >= '0' && c <= '9';
 }
 
-static inline bool is_alpha(char c)
+static constexpr bool is_alpha(char c)
 {
     return (c >= 'a' && c <= 'z')
         || (c >= 'A' && c <= 'Z')
         || c == '_';
 }
 
-static bool match(ScannerState* state, char expected)
+static bool match(ScannerState& state, char expected)
 {
     if (is_at_end(state))
         return false;
-    if (*state->current != expected)
+    if (*state.current != expected)
         return false;
 
-    state->current++;
+    state.current++;
     return true;
 }
 
-static inline char peek(ScannerState* state)
+static inline char peek(const ScannerState& state)
 {
-    return *state->current;
+    return *state.current;
 }
 
-static inline char peek_next(ScannerState* state)
+static inline char peek_next(const ScannerState& state)
 {
     if (is_at_end(state))
         return '\0';
-    return *(state->current + 1);
+    return *(state.current + 1);
 }
 
-static inline char advance(ScannerState* state)
+static inline char advance(ScannerState& state)
 {
-    state->current++;
-    return *(state->current - 1);
+    state.current++;
+    return *(state.current - 1);
 }
 
-static void whitespace(ScannerState* state)
+static void whitespace(ScannerState& state)
 {
     for (;;)
     {
@@ -65,7 +65,7 @@ static void whitespace(ScannerState* state)
 
         case '\n':
             advance(state);
-            state->line++;
+            state.line++;
             break;
 
         case '/':
@@ -84,37 +84,37 @@ static void whitespace(ScannerState* state)
     }
 }
 
-static Token make_token(ScannerState* state, TokenType type)
+static inline Token make_token(const ScannerState& state, TokenType type)
 {
-    int length = (int)(state->current - state->start);
-    Token token = { type, state->start, length, state->line };
+    int length = (int)(state.current - state.start);
+    Token token = { type, state.start, length, state.line };
     return token;
 }
 
-static Token error_token(ScannerState* state, const char* message)
+static inline Token error_token(int line, const char* message)
 {
-    Token token = { TOKEN_ERROR, message, (int)strlen(message), state->line };
+    Token token = { TOKEN_ERROR, message, (int)strlen(message), line };
     return token;
 }
 
-static TokenType check_keyword(ScannerState* state, int start, int length, const char* rest, TokenType type)
+static TokenType check_keyword(const ScannerState& state, int start, int length, const char* rest, TokenType type)
 {
-    if (state->current - state->start == start + length &&
-        memcmp(state->start + start, rest, length) == 0)
+    if (state.current - state.start == start + length &&
+        memcmp(state.start + start, rest, length) == 0)
         return type;
     return TOKEN_IDENTIFIER;
 }
 
-static TokenType identifier_type(ScannerState* state)
+static TokenType identifier_type(const ScannerState& state)
 {
-    switch (*state->start)
+    switch (*state.start)
     {
     case 'a': return check_keyword(state, 1, 2, "nd", TOKEN_AND);
     case 'c': return check_keyword(state, 1, 4, "lass", TOKEN_CLASS);
     case 'e': return check_keyword(state, 1, 3, "lse", TOKEN_ELSE);
     case 'f':
-        if (state->current - state->start > 1) {
-            switch (*(state->start + 1))
+        if (state.current - state.start > 1) {
+            switch (*(state.start + 1))
             {
             case 'a': return check_keyword(state, 2, 3, "lse", TOKEN_FALSE);
             case 'o': return check_keyword(state, 2, 1, "r", TOKEN_FOR);
@@ -129,8 +129,8 @@ static TokenType identifier_type(ScannerState* state)
     case 'r': return check_keyword(state, 1, 5, "eturn", TOKEN_RETURN);
     case 's': return check_keyword(state, 1, 4, "uper", TOKEN_SUPER);
     case 't':
-        if (state->current - state->start > 1) {
-            switch (*(state->start + 1))
+        if (state.current - state.start > 1) {
+            switch (*(state.start + 1))
             {
             case 'h': return check_keyword(state, 2, 2, "is", TOKEN_THIS);
             case 'r': return check_keyword(state, 2, 2, "ue", TOKEN_TRUE);
@@ -144,7 +144,7 @@ static TokenType identifier_type(ScannerState* state)
     return TOKEN_IDENTIFIER;
 }
 
-static Token identifier(ScannerState* state)
+static Token identifier(ScannerState& state)
 {
     while (is_alpha(peek(state)) || is_digit(peek(state)))
         advance(state);
@@ -152,7 +152,7 @@ static Token identifier(ScannerState* state)
     return make_token(state, identifier_type(state));
 }
 
-static Token number(ScannerState* state)
+static Token number(ScannerState& state)
 {
     while (is_digit(peek(state)))
         advance(state);
@@ -167,34 +167,34 @@ static Token number(ScannerState* state)
     return make_token(state, TOKEN_NUMBER);
 }
 
-static Token string(ScannerState* state)
+static Token string(ScannerState& state)
 {
     while (peek(state) != '"' && !is_at_end(state))
     {
         if (peek(state) == '\n')
-            state->line++;
+            state.line++;
         advance(state);
     }
 
     if (is_at_end(state))
-        return error_token(state, "Unterminated string");
+        return error_token(state.line, "Unterminated string");
 
     advance(state);
     return make_token(state, TOKEN_STRING);
 }
 
-void init_scanner_state(ScannerState* state, const char* source)
+void init_scanner_state(ScannerState& state, const char* source)
 {
-    state->start = source;
-    state->current = source;
-    state->line = 1;
+    state.start = source;
+    state.current = source;
+    state.line = 1;
 }
 
-Token scan_token(ScannerState* state)
+Token scan_token(ScannerState& state)
 {
     whitespace(state);
 
-    state->start = state->current;
+    state.start = state.current;
 
     if (is_at_end(state))
         return make_token(state, TOKEN_EOF);
@@ -233,5 +233,5 @@ Token scan_token(ScannerState* state)
         return string(state);
     }
 
-    return error_token(state, "unexpected character");
+    return error_token(state.line, "unexpected character");
 }

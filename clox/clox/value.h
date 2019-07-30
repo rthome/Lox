@@ -71,6 +71,6 @@ struct ValueArray
     Value* values;
 };
 
-void init_value_array(ValueArray* valarray);
-void free_value_array(ValueArray* valarray);
-void write_value_array(ValueArray* valarray, Value value);
+void init_value_array(ValueArray& valarray);
+void free_value_array(ValueArray& valarray);
+void write_value_array(ValueArray& valarray, Value value);

@@ -1,12 +1,5 @@
 #pragma once
 
-struct ScannerState
-{
-    const char* start;
-    const char* current;
-    int line;
-};
-
 enum TokenType
 {
     // Single-character tokens.                         
@@ -34,6 +27,13 @@ enum TokenType
     TOKEN_EOF
 };
 
+struct ScannerState
+{
+    const char* start;
+    const char* current;
+    int line;
+};
+
 struct Token
 {
     TokenType type;
@@ -42,5 +42,5 @@ struct Token
     int line;
 };
 
-void init_scanner_state(ScannerState* state, const char* source);
-Token scan_token(ScannerState* state);
+void init_scanner_state(ScannerState& state, const char* source);
+Token scan_token(ScannerState& state);
