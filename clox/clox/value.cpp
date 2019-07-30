@@ -31,5 +31,16 @@ void write_value_array(ValueArray *valarray, Value value)
 
 void print_value(Value value)
 {
-	printf("%g", value);
+    switch (value.type)
+    {
+    case VAL_NIL:
+        printf("nil");
+        break;
+    case VAL_BOOL:
+        printf(as_bool(value) ? "true" : "false");
+        break;
+    case VAL_NUMBER:
+	    printf("%g", as_number(value));
+        break;
+    }
 }

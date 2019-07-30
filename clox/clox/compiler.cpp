@@ -46,50 +46,51 @@ struct ParseRule
 static void grouping(Parser*);
 static void unary(Parser*);
 static void binary(Parser*);
+static void literal_val(Parser*);
 static void number(Parser*);
 
 static constexpr ParseRule PARSE_RULES[] =
 {
-    { grouping, nullptr, PREC_NONE },      // TOKEN_LEFT_PAREN      
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_RIGHT_PAREN     
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_LEFT_BRACE
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_RIGHT_BRACE     
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_COMMA           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_DOT             
-    { unary,    binary,  PREC_TERM },      // TOKEN_MINUS           
-    { nullptr,  binary,  PREC_TERM },      // TOKEN_PLUS            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_SEMICOLON       
-    { nullptr,  binary,  PREC_FACTOR },    // TOKEN_SLASH           
-    { nullptr,  binary,  PREC_FACTOR },    // TOKEN_STAR            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_BANG            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_BANG_EQUAL      
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_EQUAL           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_EQUAL_EQUAL     
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_GREATER         
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_GREATER_EQUAL   
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_LESS            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_LESS_EQUAL      
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_IDENTIFIER      
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_STRING          
-    { number,   nullptr, PREC_NONE },      // TOKEN_NUMBER          
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_AND             
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_CLASS           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_ELSE            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_FALSE           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_FOR             
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_FUN             
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_IF              
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_NIL             
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_OR              
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_PRINT           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_RETURN          
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_SUPER           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_THIS            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_TRUE            
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_VAR             
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_WHILE           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_ERROR           
-    { nullptr,  nullptr, PREC_NONE },      // TOKEN_EOF
+    { grouping,    nullptr, PREC_NONE },       // TOKEN_LEFT_PAREN      
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_RIGHT_PAREN     
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_LEFT_BRACE
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_RIGHT_BRACE     
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_COMMA           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_DOT             
+    { unary,       binary,  PREC_TERM },       // TOKEN_MINUS           
+    { nullptr,     binary,  PREC_TERM },       // TOKEN_PLUS            
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_SEMICOLON       
+    { nullptr,     binary,  PREC_FACTOR },     // TOKEN_SLASH           
+    { nullptr,     binary,  PREC_FACTOR },     // TOKEN_STAR            
+    { unary,       nullptr, PREC_NONE },       // TOKEN_BANG            
+    { nullptr,     binary,  PREC_EQUALITY },   // TOKEN_BANG_EQUAL      
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_EQUAL           
+    { nullptr,     binary,  PREC_EQUALITY },   // TOKEN_EQUAL_EQUAL     
+    { nullptr,     binary,  PREC_COMPARISON }, // TOKEN_GREATER         
+    { nullptr,     binary,  PREC_COMPARISON }, // TOKEN_GREATER_EQUAL   
+    { nullptr,     binary,  PREC_COMPARISON }, // TOKEN_LESS            
+    { nullptr,     binary,  PREC_COMPARISON }, // TOKEN_LESS_EQUAL      
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_IDENTIFIER      
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_STRING          
+    { number,      nullptr, PREC_NONE },       // TOKEN_NUMBER          
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_AND             
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_CLASS           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_ELSE            
+    { literal_val, nullptr, PREC_NONE },       // TOKEN_FALSE           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_FOR             
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_FUN             
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_IF              
+    { literal_val, nullptr, PREC_NONE },       // TOKEN_NIL             
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_OR              
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_PRINT           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_RETURN          
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_SUPER           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_THIS            
+    { literal_val, nullptr, PREC_NONE },       // TOKEN_TRUE            
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_VAR             
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_WHILE           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_ERROR           
+    { nullptr,     nullptr, PREC_NONE },       // TOKEN_EOF
 };
 
 static inline const ParseRule* get_rule(TokenType type)
@@ -212,17 +213,18 @@ static void parse_precedence(Parser* parser, Precedence precedence)
 static void number(Parser* parser)
 {
     double value = strtod(parser->previous.start, nullptr);
-    emit_constant(parser, value);
+    emit_constant(parser, number_val(value));
 }
 
 static void unary(Parser* parser)
 {
     TokenType operator_type = parser->previous.type;
-    
+
     parse_precedence(parser, PREC_UNARY);
 
     switch (operator_type)
     {
+    case TOKEN_BANG: emit_byte(parser, OP_NOT); break;
     case TOKEN_MINUS: emit_byte(parser, OP_NEGATE); break;
 
     default:
@@ -239,10 +241,35 @@ static void binary(Parser* parser)
 
     switch (operator_type)
     {
-    case TOKEN_PLUS: emit_byte(parser, OP_ADD); break;
-    case TOKEN_MINUS: emit_byte(parser, OP_SUBTRACT); break;
-    case TOKEN_STAR: emit_byte(parser, OP_MULTIPLY); break;
-    case TOKEN_SLASH: emit_byte(parser, OP_DIVIDE); break;
+    case TOKEN_BANG_EQUAL:    emit_bytes(parser, OP_EQUAL, OP_NOT); break;
+    case TOKEN_EQUAL_EQUAL:   emit_byte(parser, OP_EQUAL); break;
+    case TOKEN_GREATER:       emit_byte(parser, OP_GREATER); break;
+    case TOKEN_GREATER_EQUAL: emit_bytes(parser, OP_LESS, OP_NOT); break;
+    case TOKEN_LESS:          emit_byte(parser, OP_LESS); break;
+    case TOKEN_LESS_EQUAL:    emit_bytes(parser, OP_GREATER, OP_NOT); break;
+    case TOKEN_PLUS:          emit_byte(parser, OP_ADD); break;
+    case TOKEN_MINUS:         emit_byte(parser, OP_SUBTRACT); break;
+    case TOKEN_STAR:          emit_byte(parser, OP_MULTIPLY); break;
+    case TOKEN_SLASH:         emit_byte(parser, OP_DIVIDE); break;
+
+    default:
+        return;
+    }
+}
+
+static void literal_val(Parser* parser)
+{
+    switch (parser->previous.type)
+    {
+    case TOKEN_NIL:
+        emit_byte(parser, OP_NIL);
+        break;
+    case TOKEN_FALSE:
+        emit_byte(parser, OP_FALSE);
+        break;
+    case TOKEN_TRUE:
+        emit_byte(parser, OP_TRUE);
+        break;
 
     default:
         return;
