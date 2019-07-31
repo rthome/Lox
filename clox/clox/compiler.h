@@ -2,4 +2,4 @@
 
 #include "vm.h"
 
-bool compile(const char* source, Chunk& chunk);
+bool compile(const char* source, Chunk& chunk, ObjList& constants);

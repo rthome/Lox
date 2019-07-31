@@ -1,10 +1,12 @@
 #include <cstdio>
 #include <cstdarg>
+#include <cstring>
 
+#include "vm.h"
 #include "common.h"
 #include "compiler.h"
+#include "object.h"
 #include "debug.h"
-#include "vm.h"
 
 static inline void reset_stack(VM& vm)
 {
@@ -19,6 +21,21 @@ static inline Value peek(const VM& vm, int distance)
 static constexpr bool is_falsey(Value value)
 {
     return is_nil(value) || (is_bool(value) && !as_bool(value));
+}
+
+static void concatenate(VM& vm)
+{
+    ObjString* b = as_string(pop(vm));
+    ObjString* a = as_string(pop(vm));
+
+    int length = a->length + b->length;
+    char* chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString* result = take_string(vm.objects, chars, length);
+    push(vm, obj_val(result));
 }
 
 static void runtime_error(VM& vm, const char* format, ...)
@@ -99,6 +116,20 @@ static InterpretResult run(VM& vm)
             BINARY_OP(bool_val, < );
             break;
         case OP_ADD:
+            if (is_string(peek(vm, 0)) && is_string(peek(vm, 1)))
+                concatenate(vm);
+            else if (is_number(peek(vm, 0)) && is_number(peek(vm, 1)))
+            {
+                double b = as_number(pop(vm));
+                double a = as_number(pop(vm));
+                push(vm, number_val(a + b));
+            }
+            else
+            {
+                runtime_error(vm, "Operands must be two numbers or two strings");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            break;
             BINARY_OP(number_val, +);
             break;
         case OP_SUBTRACT:
@@ -136,11 +167,18 @@ void init_vm(VM& vm)
     vm.chunk = nullptr;
     vm.ip = 0;
     reset_stack(vm);
+    vm.objects = {};
 }
 
 void free_vm(VM& vm)
 {
-    free_chunk(*vm.chunk);
+    if (vm.chunk != nullptr)
+    {
+        Chunk& chunk = *vm.chunk;
+        free_chunk(chunk);
+    }
+
+    free_objects(vm.objects);
     init_vm(vm);
 }
 
@@ -149,7 +187,7 @@ InterpretResult interpret(VM& vm, const char* source)
     Chunk chunk = {};
     init_chunk(chunk);
 
-    if (!compile(source, chunk))
+    if (!compile(source, chunk, vm.objects))
     {
         free_chunk(chunk);
         return INTERPRET_COMPILE_ERROR;
@@ -160,6 +198,8 @@ InterpretResult interpret(VM& vm, const char* source)
 
     InterpretResult result = run(vm);
 
+    vm.chunk = nullptr;
+    vm.ip = nullptr;
     free_chunk(chunk);
     return result;
 }

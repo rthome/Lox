@@ -2,11 +2,15 @@
 
 #include "common.h"
 
+struct Obj;
+struct ObjString;
+
 enum ValueType
 {
     VAL_NIL,
     VAL_BOOL,
     VAL_NUMBER,
+    VAL_OBJ,
 };
 
 struct Value
@@ -16,12 +20,13 @@ struct Value
     {
         bool boolean;
         double number;
+        Obj* obj;
     };
 };
 
 constexpr Value nil_val()
-{ 
-    Value value { VAL_NIL };
+{
+    Value value{ VAL_NIL };
     return value;
 };
 
@@ -39,28 +44,24 @@ constexpr Value number_val(double v)
     return value;
 };
 
+template<typename TObj>
+constexpr Value obj_val(TObj* obj)
+{
+    Value value{ VAL_OBJ };
+    value.obj = reinterpret_cast<Obj*>(obj);
+    return value;
+}
+
 constexpr bool as_bool(Value value) { return value.boolean; }
 constexpr double as_number(Value value) { return value.number; }
+constexpr Obj* as_obj(Value value) { return value.obj; }
 
 constexpr bool is_nil(Value value) { return value.type == VAL_NIL; }
 constexpr bool is_bool(Value value) { return value.type == VAL_BOOL; }
 constexpr bool is_number(Value value) { return value.type == VAL_NUMBER; }
+constexpr bool is_obj(Value value) { return value.type == VAL_OBJ; }
 
-constexpr bool values_equal(Value a, Value b)
-{
-    if (a.type != b.type)
-        return false;
-
-    switch (a.type)
-    {
-    case VAL_NIL:
-        return true;
-    case VAL_BOOL:
-        return as_bool(a) == as_bool(b);
-    case VAL_NUMBER:
-        return as_number(a) == as_number(b);
-    }
-}
+bool values_equal(Value a, Value b);
 
 void print_value(Value value);
 

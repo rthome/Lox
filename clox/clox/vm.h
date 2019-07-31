@@ -1,7 +1,9 @@
 #pragma once
 
+#include "memory.h"
 #include "chunk.h"
 #include "value.h"
+#include "object.h"
 
 enum InterpretResult
 {
@@ -18,6 +20,8 @@ struct VM
     uint8_t* ip;
     Value stack[STACK_MAX];
     Value* stack_top;
+
+    ObjList objects;
 };
 
 void init_vm(VM& vm);

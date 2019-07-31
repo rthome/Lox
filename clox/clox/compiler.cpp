@@ -4,6 +4,7 @@
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+#include "object.h"
 
 #ifdef DEBUG_PRINT_CODE
 #include "debug.h"
@@ -17,6 +18,8 @@ struct Parser
     Token previous;
     bool had_error;
     bool panic_mode;
+
+    ObjList* constants;
 };
 
 enum Precedence
@@ -48,6 +51,7 @@ static void unary(Parser&);
 static void binary(Parser&);
 static void literal_val(Parser&);
 static void number(Parser&);
+static void string(Parser&);
 
 static constexpr ParseRule PARSE_RULES[] =
 {
@@ -71,7 +75,7 @@ static constexpr ParseRule PARSE_RULES[] =
     { nullptr,     binary,  PREC_COMPARISON }, // TOKEN_LESS            
     { nullptr,     binary,  PREC_COMPARISON }, // TOKEN_LESS_EQUAL      
     { nullptr,     nullptr, PREC_NONE },       // TOKEN_IDENTIFIER      
-    { nullptr,     nullptr, PREC_NONE },       // TOKEN_STRING          
+    { string,      nullptr, PREC_NONE },       // TOKEN_STRING          
     { number,      nullptr, PREC_NONE },       // TOKEN_NUMBER          
     { nullptr,     nullptr, PREC_NONE },       // TOKEN_AND             
     { nullptr,     nullptr, PREC_NONE },       // TOKEN_CLASS           
@@ -216,6 +220,11 @@ static void number(Parser& parser)
     emit_constant(parser, number_val(value));
 }
 
+static void string(Parser& parser)
+{
+    emit_constant(parser, obj_val(copy_string(*parser.constants, parser.previous.start + 1, parser.previous.length - 2)));
+}
+
 static void unary(Parser& parser)
 {
     TokenType operator_type = parser.previous.type;
@@ -287,7 +296,7 @@ static void grouping(Parser& parser)
     consume(parser, TOKEN_RIGHT_PAREN, "Expect ')' after expression");
 }
 
-bool compile(const char* source, Chunk& chunk)
+bool compile(const char* source, Chunk& chunk, ObjList& constants)
 {
     ScannerState scanner_state = {};
     init_scanner_state(scanner_state, source);
@@ -295,6 +304,7 @@ bool compile(const char* source, Chunk& chunk)
     Parser parser = {};
     parser.scanner = &scanner_state;
     parser.compiling_chunk = &chunk;
+    parser.constants = &constants;
 
     advance(parser);
     expression(parser);
