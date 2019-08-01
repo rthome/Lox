@@ -3,7 +3,6 @@
 #include "memory.h"
 #include "chunk.h"
 #include "value.h"
-#include "object.h"
 
 enum InterpretResult
 {

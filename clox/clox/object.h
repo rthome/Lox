@@ -20,6 +20,7 @@ struct ObjString
     Obj obj;
     int length;
     char* chars;
+    uint32_t hash;
 };
 
 void print_object(Value value);
